@@ -54,4 +54,4 @@ The set is illustrative and source-linked, not a complete regulatory history.
 
 ## Coverage date
 
-Source review current through **2026-09-07**. Every shipped financing and regulatory marker carries a direct source URL.
+Source review current through **2026-09-30**. Every shipped financing and regulatory marker carries a direct source URL. Rows reviewed on that date carry `source_kind` and `reviewed_on`; older rows remain unlabeled rather than being marked reviewed.

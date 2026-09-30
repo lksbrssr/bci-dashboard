@@ -6,13 +6,21 @@ import { lookupAcronym } from "@/components/abbr";
 import {
   buildCompanyRows,
   formatCapital,
+  formatFundingDate,
   getTimelinePosition,
   type FundingCompanyRow,
   type FundingIndexData,
 } from "@/lib/funding-index";
 import { clampCenteredTooltipX } from "@/lib/tooltip-position";
 
-const date = new Intl.DateTimeFormat("en-US", { month: "short", year: "numeric", timeZone: "UTC" });
+function sourceReviewLabel(date: string) {
+  const precision = date.length === 10 ? "day" : date.length === 7 ? "month" : "year";
+  return `Source reviewed ${formatFundingDate(date, precision)}`;
+}
+
+function sourceKindLabel(kind: "primary" | "reporting") {
+  return kind === "primary" ? "Primary source" : "Reported source";
+}
 
 function markerTitle(marker: string, indication?: string) {
   const expansion = lookupAcronym(marker)?.expansion ?? marker;
@@ -247,6 +255,8 @@ export function FundingIndexDashboard({ data }: { data: FundingIndexData }) {
                       <div className="pl-4 text-right">
                         <div className="text-sm font-semibold">{formatCapital(row.observedCapitalUsdM)}</div>
                         <div className="mt-0.5 text-[10px] text-faint">{row.rounds.length} {row.rounds.length === 1 ? "round" : "rounds"}</div>
+                        {row.rounds.some((round) => round.sourceKind) && <div className="mt-1 text-[10px] text-muted">{[...new Set(row.rounds.flatMap((round) => round.sourceKind ? [sourceKindLabel(round.sourceKind)] : []))].join(" · ")}</div>}
+                        {row.rounds.some((round) => round.reviewedOn) && <div className="mt-0.5 text-[10px] text-muted">{[...new Set(row.rounds.flatMap((round) => round.reviewedOn ? [sourceReviewLabel(round.reviewedOn)] : []))].join(" · ")}</div>}
                       </div>
                     </button>
                   );
@@ -281,6 +291,7 @@ export function FundingIndexDashboard({ data }: { data: FundingIndexData }) {
                         <FirmLogo name={row.name} src={row.logo} size={32} />
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center justify-between gap-3 text-xs font-semibold"><span className="truncate">{row.name}</span><span>{formatCapital(row.observedCapitalUsdM)}</span></div>
+                          {row.rounds.some((round) => round.sourceKind || round.reviewedOn) && <div className="mt-1 text-[10px] text-muted">{[...new Set(row.rounds.flatMap((round) => [round.sourceKind ? sourceKindLabel(round.sourceKind) : "", round.reviewedOn ? sourceReviewLabel(round.reviewedOn) : ""].filter(Boolean)))].join(" · ")}</div>}
                           <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-border"><div className="h-full rounded-full bg-accent" style={{ width: `${Math.max(4, (row.observedCapitalUsdM / Math.max(group.companies[0]?.observedCapitalUsdM ?? 1, 1)) * 100)}%` }} /></div>
                         </div>
                       </button>
@@ -338,7 +349,7 @@ export function FundingIndexDashboard({ data }: { data: FundingIndexData }) {
             </div>
             <div>
               <div className="text-[10px] font-bold uppercase tracking-[0.17em] text-muted">Coverage</div>
-              <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted">{data.methodology.coverage} Data through {data.summary.asOf}.</p>
+              <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted">{data.methodology.coverage} Latest selective review {formatFundingDate(data.summary.asOf, "day")}. Financing histories remain partial, and the indexed sum is not an all-time total.</p>
             </div>
           </div>
         </div>
@@ -385,9 +396,10 @@ export function FundingIndexDashboard({ data }: { data: FundingIndexData }) {
                   {[...selected.rounds].reverse().map((round) => (
                     <article key={`${round.announcedOn}-${round.stage}`} className="rounded-2xl border border-border bg-surface-raised p-4">
                       <div className="flex items-start justify-between gap-4">
-                        <div><div className="text-sm font-semibold">{round.stage}</div><div className="mt-1 text-xs text-muted">{date.format(new Date(`${round.announcedOn}T00:00:00Z`))}</div></div>
+                        <div><div className="text-sm font-semibold">{round.stage}</div><div className="mt-1 text-xs text-muted">{formatFundingDate(round.announcedOn, round.datePrecision)}</div></div>
                         <div className="text-lg font-semibold text-accent">{round.displayAmount}</div>
                       </div>
+                      {round.sourceKind && <p className="mt-3 text-xs font-semibold">{sourceKindLabel(round.sourceKind)}{round.reviewedOn ? ` · ${sourceReviewLabel(round.reviewedOn)}` : ""}</p>}
                       {round.investors && round.investors.length > 0 && <p className="mt-3 text-xs leading-relaxed text-muted">{round.investors.join(" · ")}</p>}
                       {round.note && <p className="mt-2 text-[11px] leading-relaxed text-faint">{round.note}</p>}
                       {round.sourceUrl && <a href={round.sourceUrl} target="_blank" rel="noreferrer" className="mt-3 inline-flex text-xs font-semibold text-accent underline decoration-accent/35 underline-offset-4 hover:decoration-accent">Source ↗</a>}
@@ -402,7 +414,7 @@ export function FundingIndexDashboard({ data }: { data: FundingIndexData }) {
                   <div className="mt-3 space-y-3">
                     {selectedMilestones.map((milestone) => (
                       <article key={`${milestone.announcedOn}-${milestone.marker}`} className="rounded-2xl border border-border bg-positive-soft p-4">
-                        <div className="flex items-center justify-between gap-3"><span className="cursor-help rounded bg-[#11131a] px-2 py-1 text-[10px] font-bold text-white" onMouseEnter={(event) => showMarkerTip(event, milestone.marker, milestone.indication)} onMouseLeave={() => setMarkerTip(null)} aria-label={markerTitle(milestone.marker, milestone.indication)}>{milestone.marker}</span><span className="text-xs text-muted">{date.format(new Date(`${milestone.announcedOn}T00:00:00Z`))}</span></div>
+                        <div className="flex items-center justify-between gap-3"><span className="cursor-help rounded bg-[#11131a] px-2 py-1 text-[10px] font-bold text-white" onMouseEnter={(event) => showMarkerTip(event, milestone.marker, milestone.indication)} onMouseLeave={() => setMarkerTip(null)} aria-label={markerTitle(milestone.marker, milestone.indication)}>{milestone.marker}</span><span className="text-xs text-muted">{formatFundingDate(milestone.announcedOn, milestone.datePrecision)}</span></div>
                         <p className="mt-3 text-sm font-medium">{milestone.indication}</p>
                         {milestone.note && <p className="mt-1.5 text-xs leading-relaxed text-muted">{milestone.note}</p>}
                         <a href={milestone.sourceUrl} target="_blank" rel="noreferrer" className="mt-3 inline-flex text-xs font-semibold underline decoration-black/20 underline-offset-4">Source ↗</a>

@@ -114,12 +114,12 @@ fundingIndex.summary = {
   observedCapitalUsdM: Number(observedCapitalUsdM.toFixed(2)),
   firstYear: Math.min(...years),
   lastYear: Math.max(...years),
-  asOf: "2026-09-07",
+  asOf: "2026-09-30",
 };
 fundingIndex.methodology = {
   thresholdUsdM: 2,
   scope: "Selected implanted, minimally invasive, and implant-adjacent BCI companies with at least one publicly sourced financing of $2m or more.",
-  coverage: "Publicly disclosed indexed rounds, not an exhaustive funding-to-date total. Amounts are announcement values; approximate currency conversions are labeled.",
+  coverage: "Publicly disclosed indexed rounds, not an exhaustive funding-to-date total. Company histories remain partial. Amounts are announcement values; reported cumulative totals, grants, and approximate currency conversions are not added into the indexed sum.",
 };
 fs.writeFileSync(path.join(OUT, "funding-index.json"), JSON.stringify(fundingIndex));
 
