@@ -29,14 +29,17 @@ test("2024–25 capital lane includes mega-rounds; year bars stay independent", 
   assert.equal(has("Neuralink", "2025-06-02", 650), true);
   assert.equal(has("Synchron", "2025-11-06", 200), true);
   assert.equal(has("Precision Neuroscience", "2024-12-16", 102), true);
+  assert.equal(has("Precision Neuroscience", "2026-09-24", 250), true);
   assert.equal(
     capital.some((row) => row.company === "Science Corp" && (row.date ?? "").startsWith("2025")),
     true,
   );
 
   // Year-column heroes are sourced capital *raised* (sum of dots), not the memo bars.
+  // 2026 is no longer labeled Jan–Apr: later sourced events sit on the same year lane.
   assert.match(timeline, /capitalRaisedInYear/);
-  assert.match(timeline, /raised\{year === 2026/);
+  assert.match(timeline, />raised</);
+  assert.doesNotMatch(timeline, /Jan–Apr/);
   assert.doesNotMatch(timeline, /new capital\{y\.year === 2026/);
   // Memo cut stays as a labeled comparison, sourced from capital.json.
   assert.match(timeline, /MEMO_CAPITAL/);

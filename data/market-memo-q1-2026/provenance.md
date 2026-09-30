@@ -15,6 +15,7 @@ There is **no public machine-readable dataset** behind the infographic. The chai
 - **Penumbra $14b** = Boston Scientific's acquisition, reported at **$14.5b**; author explicitly flags it as "not a 'BCI' play" but a neural-access bet.
 - **Synchron's $200m Series D closed Nov 2025** — outside the memo window; the tracked milestone is the pivotal trial start.
 - **MintNeuro–Motif partnership (May 1, 2026)** was omitted from the visual as out-of-window; added to `milestones.csv` as an extra flagged row.
+- **Post-memo additions (reviewed 2026-09-30)** sit on the same lanes only when a company release names the date. Added: Paradromics Connect-One personal-device expansion (2026-08-26), CorTec’s second Breakthrough Device Designation (announced 2026-08-31), Paradromics real-time speech in Connect-One (2026-09-14), and Precision Neuroscience’s $250m Series D (2026-09-24). The Series D’s $430m total-raised figure is cumulative and is not plotted. Newsletter-only items without a dated company release were left off.
 - **China**: StairMed + Gestala + Axoft raises crossed $100m combined — the memo calls out breadth of Chinese investor types as the trend to watch.
 
 ## Getting the real underlying data

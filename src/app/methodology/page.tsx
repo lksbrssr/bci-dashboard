@@ -15,8 +15,8 @@ const SOURCES = [
   },
   {
     name: "Q1+ 2026 BCI Market Memo",
-    what: "2026 milestone events, deals, and ecosystem firms, Jan–Apr 2026. By Neurotech Futures & PL Neuro; enriched here with primary-source dates.",
-    cadence: "Point-in-time (Apr 2026)",
+    what: "2026 milestone events, deals, and ecosystem firms. By Neurotech Futures & PL Neuro; enriched here with primary-source dates and post-memo additions through September 2026.",
+    cadence: "Point-in-time memo plus verified 2026 releases",
     url: "https://neurotechnology.substack.com/p/representations2",
   },
   {
@@ -178,8 +178,8 @@ export default function MethodologyPage() {
               <span className="tnum font-medium text-foreground">2026-09-07</span> — Shared dark plate hero (title + stats) on Milestones, Ecosystem, Funding index, Field velocity, and Methodology. Funding-index regulatory markers use a real hover tooltip instead of the native title attribute.
             </li>
             <li>
-              <span className="tnum font-medium text-foreground">2026-08-24</span> — v0.2:
-              plates introduced; milestone timeline (Jan–Apr 2026), faceted landscape
+              <span className="tnum font-medium text-foreground">2026-08-26</span> — Four
+              plates introduced; milestone timeline (2024–2026), faceted landscape
               explorer, velocity instruments, capital partials. Announcement dates
               added to 10 of 28 milestone rows from primary sources.
             </li>

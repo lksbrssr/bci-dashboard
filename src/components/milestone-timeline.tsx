@@ -244,13 +244,80 @@ export function MilestoneTimeline() {
     </div>
   );
 
-  // The 2026 full-year plot (scrolls inside its column).
+  // The focused year is wider than its column on purpose. A visible scrollbar,
+  // a "scroll for later months" cue, and a jump-to-latest control keep the
+  // months past the fold from looking like the year has ended.
+  const plotScrollRef = useRef<HTMLDivElement>(null);
+  const [canScrollLater, setCanScrollLater] = useState(false);
+  const [scrolledLater, setScrolledLater] = useState(false);
+  const [scrollRatio, setScrollRatio] = useState(1);
+  const [scrollOffset, setScrollOffset] = useState(0);
+  const syncPlotScroll = () => {
+    const el = plotScrollRef.current;
+    if (!el) return;
+    const max = el.scrollWidth - el.clientWidth;
+    const nextCan = max > 8;
+    const nextScrolled = el.scrollLeft > 24;
+    const nextRatio = max > 8 ? el.clientWidth / el.scrollWidth : 1;
+    const nextOffset = max > 8 ? el.scrollLeft / max : 0;
+    setCanScrollLater((prev) => (prev === nextCan ? prev : nextCan));
+    setScrolledLater((prev) => (prev === nextScrolled ? prev : nextScrolled));
+    setScrollRatio((prev) => (Math.abs(prev - nextRatio) < 0.01 ? prev : nextRatio));
+    setScrollOffset((prev) => (Math.abs(prev - nextOffset) < 0.01 ? prev : nextOffset));
+  };
+  useEffect(() => {
+    const el = plotScrollRef.current;
+    if (!el || typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(() => {
+      requestAnimationFrame(syncPlotScroll);
+    });
+    observer.observe(el);
+    const frame = requestAnimationFrame(syncPlotScroll);
+    return () => {
+      cancelAnimationFrame(frame);
+      observer.disconnect();
+    };
+  }, [focusYear, railOpen, totalH]);
+  const scrollPlotTo = (edge: "start" | "end") => {
+    const el = plotScrollRef.current;
+    if (!el) return;
+    el.scrollTo({ left: edge === "end" ? el.scrollWidth : 0, behavior: "smooth" });
+  };
+
   const plot = (
-    <div className="h-full overflow-x-auto pb-2" style={{ height: totalH + 16 }}>
+    <div className="relative">
+      {canScrollLater && !scrolledLater && (
+        <button
+          type="button"
+          onClick={() => scrollPlotTo("end")}
+          className="absolute right-2 -top-6 z-20 flex items-center gap-1 rounded-full border border-border-strong bg-surface px-2 py-0.5 text-[10px] font-semibold text-foreground shadow-sm hover:border-accent"
+        >
+          Later months
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+        </button>
+      )}
+      {canScrollLater && scrolledLater && (
+        <button
+          type="button"
+          onClick={() => scrollPlotTo("start")}
+          className="absolute left-2 -top-6 z-20 flex items-center gap-1 rounded-full border border-border-strong bg-surface px-2 py-0.5 text-[10px] font-semibold text-foreground shadow-sm hover:border-accent"
+        >
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M19 12H5M11 6l-6 6 6 6" /></svg>
+          Earlier months
+        </button>
+      )}
+      <div
+        ref={plotScrollRef}
+        onScroll={syncPlotScroll}
+        className="milestone-year-scroll"
+        style={{ height: totalH + 22 }}
+        tabIndex={0}
+        aria-label={`${focusYear} timeline. Scroll horizontally for later months.`}
+      >
       <div
         ref={plotRef}
         className="relative cursor-crosshair select-none"
-        style={{ width: FULL_W, height: totalH }}
+        style={{ width: railOpen ? FULL_W : "100%", height: totalH }}
         onPointerDown={(e) => { dragStart.current = xToPct(e.clientX); dragged.current = false; setSelRange(null); }}
         onPointerMove={(e) => {
           const rect = e.currentTarget.getBoundingClientRect();
@@ -298,9 +365,9 @@ export function MilestoneTimeline() {
           const p = ((now - t0) / (t1 - t0)) * 100;
           if (p < 0 || p > 100) return null;
           return (
-            <div className="pointer-events-none absolute bottom-0 top-0" style={{ left: `${p}%`, zIndex: 6 }}>
-              <div className="absolute bottom-0 top-4 border-l-2 border-dashed" style={{ borderColor: "var(--accent)" }} />
-              <div className="absolute top-0 -translate-x-1/2 whitespace-nowrap rounded-full bg-accent px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider" style={{ color: "var(--accent-foreground)" }}>today</div>
+            <div className="pointer-events-none absolute bottom-0 top-0" style={{ left: `${p}%`, zIndex: 2 }}>
+              <div className="absolute bottom-0 top-5 border-l-2 border-dashed" style={{ borderColor: "var(--accent)" }} />
+              <div className="absolute top-5 -translate-x-1/2 whitespace-nowrap rounded-full bg-accent px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider" style={{ color: "var(--accent-foreground)" }}>today</div>
             </div>
           );
         })()}
@@ -341,6 +408,29 @@ export function MilestoneTimeline() {
           }),
         )}
       </div>
+      </div>
+      {canScrollLater && (
+        <button
+          type="button"
+          onClick={() => scrollPlotTo(scrolledLater ? "start" : "end")}
+          aria-label={scrolledLater ? "Show earlier months" : "Show later months"}
+          className="mt-2 flex h-3.5 w-full items-center rounded-full border border-border bg-surface-raised px-0.5"
+        >
+          <span
+            className="block h-2.5 rounded-full bg-muted"
+            style={{ width: `${Math.max(18, scrollRatio * 100)}%`, marginLeft: `${scrollOffset * (100 - Math.max(18, scrollRatio * 100))}%` }}
+          />
+        </button>
+      )}
+      {canScrollLater && (
+        <div className="mt-1.5 flex items-center justify-between gap-3 text-[10px] text-faint">
+          <span>
+            {scrolledLater ? "Earlier months are off to the left." : "Later months are off to the right. Use the bar"}
+            <span className="hidden lg:inline">, or fold the side panel</span>.
+          </span>
+          <span className="hidden shrink-0 font-medium sm:inline">Jan → Dec</span>
+        </div>
+      )}
     </div>
   );
 
@@ -448,7 +538,7 @@ export function MilestoneTimeline() {
                   <div className="absolute inset-x-0 top-5 px-2 text-center">
                     <div className="text-[10px] font-semibold uppercase tracking-wider text-muted">{year}</div>
                     <div className="tnum text-sm font-semibold tracking-tight">{fmtUsd(raised)}</div>
-                    <div className="mt-0.5 text-[10px] leading-tight text-faint">raised{year === 2026 ? " · Jan–Apr" : ""}</div>
+                    <div className="mt-0.5 text-[10px] leading-tight text-faint">raised</div>
                   </div>
                 </button>
               );
@@ -470,13 +560,14 @@ export function MilestoneTimeline() {
           )}
         </div>
 
-        {/* Collapsible summary rail */}
+        {/* Collapsible summary rail. Folding it gives the focused year the full width. */}
         {railOpen ? (
           <aside className="hidden w-48 shrink-0 lg:block">
-            <div className="mb-3 flex items-center justify-between">
+            <div className="mb-3 flex items-center justify-between gap-2">
               <span className="text-[10px] font-semibold uppercase tracking-wider text-faint">Capital raised</span>
-              <button type="button" onClick={() => setRailOpen(false)} aria-label="Collapse panel" title="Collapse panel"
-                className="flex h-5 w-5 items-center justify-center rounded-full border border-border text-faint transition-colors hover:border-border-strong hover:text-foreground">
+              <button type="button" onClick={() => setRailOpen(false)} aria-label="Fold side panel to show the full year" title="Fold panel — show the full year"
+                className="flex shrink-0 items-center gap-1 rounded-full border border-border px-1.5 py-0.5 text-[10px] font-medium text-faint transition-colors hover:border-border-strong hover:text-foreground">
+                Fold
                 <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round"><path d="M9 6l6 6-6 6" /></svg>
               </button>
             </div>
@@ -490,7 +581,7 @@ export function MilestoneTimeline() {
                 {year === 2026 && cumulativeCapital(2026, scopeFilter).length > 1 && <span className="mt-0.5 block"><Sparkline series={cumulativeCapital(2026, scopeFilter)} width={166} height={22} /></span>}
               </button>
             ))}
-            <div className="mt-1 px-1 text-[10px] leading-snug text-faint">Sourced round sizes on this lane — not valuations or market cap. 2026 is Jan–Apr.</div>
+            <div className="mt-1 px-1 text-[10px] leading-snug text-faint">Sourced round sizes on this lane — not valuations or market cap. Fold this panel to see a full year without scrolling.</div>
             <div className="mt-3 border-t border-border pt-3">
               <div className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-faint">Memo cut</div>
               {MEMO_CAPITAL.map((c) => (
@@ -532,9 +623,10 @@ export function MilestoneTimeline() {
             </div>
           </aside>
         ) : (
-          <button type="button" onClick={() => setRailOpen(true)} aria-label="Open summary panel" title="Open summary"
-            className="hidden shrink-0 items-start justify-center rounded-lg border border-border pt-3 text-faint transition-colors hover:border-border-strong hover:text-foreground lg:flex" style={{ width: 22 }}>
+          <button type="button" onClick={() => setRailOpen(true)} aria-label="Open side panel" title="Open side panel"
+            className="hidden shrink-0 flex-col items-center gap-2 rounded-lg border border-border pt-3 text-faint transition-colors hover:border-border-strong hover:text-foreground lg:flex" style={{ width: 28 }}>
             <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round"><path d="M15 6l-6 6 6 6" /></svg>
+            <span className="text-[9px] font-semibold uppercase tracking-wider [writing-mode:vertical-rl]">Panel</span>
           </button>
         )}
       </div>
@@ -555,7 +647,7 @@ export function MilestoneTimeline() {
           </div>
           <div className="tnum text-[12px] font-medium text-background/90">
             {tip.m.stage === "capital" && tip.m.amountUsdM ? `${tip.m.activity} raised` : tip.m.activity}
-            <span className="text-background/60">{" · "}{tip.m.date ? fmtDateFull(tip.m.date) : "Jan–Apr 2026 · exact date TBD"}</span>
+            <span className="text-background/60">{" · "}{tip.m.date ? fmtDateFull(tip.m.date) : "exact date TBD"}</span>
           </div>
           {expandActivity(tip.m.activity).filter(([, ex]) => ex).length > 0 && (
             <div className="mt-1 text-[10px] leading-snug text-background/60">{expandActivity(tip.m.activity).filter(([, ex]) => ex).map(([tok, ex]) => `${tok} — ${ex}`).join(" · ")}</div>
