@@ -66,7 +66,7 @@ test("aggregates investor participation across financing rounds", async () => {
 
   assert.deepEqual(
     { roundCount: khosla.roundCount, companyCount: khosla.companyCount },
-    { roundCount: 3, companyCount: 2 },
+    { roundCount: 5, companyCount: 2 },
   );
 });
 
@@ -119,7 +119,7 @@ test("formats indexed capital in familiar financial units", () => {
 test("uses the current primary Neuralink financing source", async () => {
   const here = path.dirname(fileURLToPath(import.meta.url));
   const index = buildFundingIndex(await loadFundingIndexSources(path.join(here, "..", "data", "funding-index")));
-  const neuralink = index.rounds.find((round) => round.companySlug === "neuralink");
+  const neuralink = index.rounds.find((round) => round.companySlug === "neuralink" && round.stage === "Series E");
 
   assert.equal(neuralink.sourceUrl, "https://neuralink.com/updates/neuralink-raises-650m-series-e/");
 });

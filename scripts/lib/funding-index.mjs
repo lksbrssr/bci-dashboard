@@ -2,6 +2,7 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 
 export const MINIMUM_ROUND_USD_M = 2;
+const SOURCE_KINDS = new Set(["primary", "reporting"]);
 
 export function parseCsv(text) {
   const rows = [];
@@ -49,9 +50,17 @@ export function buildFundingIndex({ companies, rounds, milestones }) {
     scope: company.scope,
   }));
   const companySlugs = new Set(normalizedCompanies.map((company) => company.slug));
+  const seenEvents = new Set();
   const parsedRounds = rounds.map((round) => {
     if (!companySlugs.has(round.company_slug)) throw new Error(`Unknown company slug: ${round.company_slug}`);
-    const amountUsdM = Number(round.amount_usd_m);
+    const eventKey = `${round.company_slug}\0${round.announced_on}\0${round.stage}`;
+    if (seenEvents.has(eventKey)) throw new Error(`Duplicate funding event: ${round.company_slug}, ${round.announced_on}, ${round.stage}`);
+    seenEvents.add(eventKey);
+    const sourceKind = round.source_kind?.trim();
+    if (sourceKind && !SOURCE_KINDS.has(sourceKind)) throw new Error(`Invalid source_kind: ${sourceKind}`);
+    const rawAmount = round.amount_usd_m?.trim() ?? "";
+    const amountUsdM = rawAmount ? Number(rawAmount) : Number.NaN;
+    if (rawAmount && (!Number.isFinite(amountUsdM) || amountUsdM < 0)) throw new Error(`Invalid disclosed amount: ${rawAmount}`);
     return {
       companySlug: round.company_slug,
       announcedOn: round.announced_on,
@@ -61,14 +70,19 @@ export function buildFundingIndex({ companies, rounds, milestones }) {
       amountNativeM: round.amount_native_m ? Number(round.amount_native_m) : null,
       currency: round.currency,
       displayAmount: round.display_amount,
-      investors: round.investors ? round.investors.split(";").map((name) => name.trim()).filter(Boolean) : [],
+      investors: [...new Set(round.investors ? round.investors.split(";").map((name) => name.trim()).filter(Boolean) : [])],
       sourceUrl: round.source_url,
       note: round.note,
+      ...(sourceKind ? { sourceKind } : {}),
+      ...(round.reviewed_on?.trim() ? { reviewedOn: round.reviewed_on.trim() } : {}),
     };
   });
   const includedRounds = parsedRounds.filter((round) =>
     Number.isFinite(round.amountUsdM) && round.amountUsdM >= MINIMUM_ROUND_USD_M,
   );
+  const excludedBelowThreshold = parsedRounds.filter((round) =>
+    Number.isFinite(round.amountUsdM) && round.amountUsdM < MINIMUM_ROUND_USD_M,
+  ).length;
 
   const investorMap = new Map();
   for (const round of includedRounds) {
@@ -107,7 +121,7 @@ export function buildFundingIndex({ companies, rounds, milestones }) {
     rounds: includedRounds,
     milestones: normalizedMilestones,
     investors,
-    summary: { excludedBelowThreshold: rounds.length - includedRounds.length },
+    summary: { excludedBelowThreshold },
   };
 }
 
@@ -150,6 +164,18 @@ export function getTimelinePosition(announcedOn, firstYear, lastYear) {
   const point = Date.parse(`${announcedOn}T00:00:00Z`);
   if (!Number.isFinite(point) || end <= start) return 0;
   return Math.min(100, Math.max(0, ((point - start) / (end - start)) * 100));
+}
+
+export function formatFundingDate(date, precision) {
+  if (precision === "year") return date.slice(0, 4);
+  const [year, month, day] = date.split("-").map(Number);
+  const parsed = new Date(Date.UTC(year, (month || 1) - 1, day || 1));
+  return new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    year: "numeric",
+    ...(precision === "day" ? { day: "numeric" } : {}),
+    timeZone: "UTC",
+  }).format(parsed);
 }
 
 export function formatCapital(amountUsdM) {

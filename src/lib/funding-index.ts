@@ -22,6 +22,8 @@ export type FundingRound = {
   investors?: string[];
   sourceUrl?: string;
   note?: string;
+  sourceKind?: "primary" | "reporting";
+  reviewedOn?: string;
 };
 
 export type FundingFilters = {
@@ -117,6 +119,18 @@ export type FundingIndexData = {
     coverage: string;
   };
 };
+export function formatFundingDate(date: string, precision?: string): string {
+  if (precision === "year") return date.slice(0, 4);
+  const [year, month, day] = date.split("-").map(Number);
+  const parsed = new Date(Date.UTC(year, (month || 1) - 1, day || 1));
+  return new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    year: "numeric",
+    ...(precision === "day" ? { day: "numeric" } : {}),
+    timeZone: "UTC",
+  }).format(parsed);
+}
+
 export function formatCapital(amountUsdM: number): string {
   const value = amountUsdM >= 1000 ? amountUsdM / 1000 : amountUsdM;
   const suffix = amountUsdM >= 1000 ? "B" : "M";
