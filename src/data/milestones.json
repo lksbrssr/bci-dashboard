@@ -856,5 +856,57 @@
     "sourceUrl": "https://science.xyz/news/ce-mark/",
     "logo": "/logos/science-corp.png",
     "scope": "bci"
+  },
+  {
+    "company": "Paradromics",
+    "slug": "paradromics",
+    "activity": "IDE",
+    "stage": "clinical",
+    "amountUsdM": null,
+    "date": "2026-08-26",
+    "datePrecision": "day",
+    "note": "FDA approval letter expanding Connect-One so Connexus can be used with personal laptops, tablets, and phones, not only a company-provided computer",
+    "sourceUrl": "https://paradromics.com/news/paradromics-receives-fda-approval-to-expand-bci-access-to-personal-computing-devices-in-connect-one-clinical-study/",
+    "logo": "/logos/paradromics.png",
+    "scope": "bci"
+  },
+  {
+    "company": "CorTec",
+    "slug": "cortec",
+    "activity": "BDD",
+    "stage": "clinical",
+    "amountUsdM": null,
+    "date": "2026-08-31",
+    "datePrecision": "day",
+    "note": "Second FDA Breakthrough Device Designation for Brain Interchange, covering computer-cursor control for people with non-progressive quadriplegia. Distinct from the April stroke-rehabilitation designation.",
+    "sourceUrl": "https://finanzwire.com/press-release/cortec-receives-second-fda-breakthrough-device-designation-for-brain-interchange-MkxNs0M6Rmp",
+    "logo": "/logos/cortec.png",
+    "scope": "bci"
+  },
+  {
+    "company": "Paradromics",
+    "slug": "paradromics",
+    "activity": "trial",
+    "stage": "clinical",
+    "amountUsdM": null,
+    "date": "2026-09-14",
+    "datePrecision": "day",
+    "note": "First Connect-One participant used the fully implanted Connexus BCI for real-time speech and text, including open-ended questions. Investigational; not a marketing approval.",
+    "sourceUrl": "https://paradromics.com/news/paradromics-achieves-real-time-speech-connexus-brain-computer-interface/",
+    "logo": "/logos/paradromics.png",
+    "scope": "bci"
+  },
+  {
+    "company": "Precision Neuroscience",
+    "slug": "precision-neuroscience",
+    "activity": "$250m",
+    "stage": "capital",
+    "amountUsdM": 250,
+    "date": "2026-09-24",
+    "datePrecision": "day",
+    "note": "Series D raise of $250m, co-led by Pershing Square Inc. and the Ackman Oxman Institute. The release's $430m total capital raised is a cumulative figure and is not plotted.",
+    "sourceUrl": "https://www.globenewswire.com/news-release/2026/09/24/3368254/0/en/precision-neuroscience-closes-oversubscribed-250m-series-d-led-by-pershing-square-inc-the-ackman-oxman-institute-and-a-leading-life-sciences-investment-fund.html",
+    "logo": "/logos/precision-neuroscience.png",
+    "scope": "bci"
   }
 ]

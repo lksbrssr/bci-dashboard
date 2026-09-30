@@ -122,3 +122,15 @@ body {
 .tnum {
   font-variant-numeric: tabular-nums;
 }
+
+/* The browser's overlay scrollbar disappears on phones. Hide it and draw
+   one always-visible track under the year lane instead. */
+.milestone-year-scroll {
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.milestone-year-scroll::-webkit-scrollbar {
+  display: none;
+  height: 0;
+  width: 0;
+}
