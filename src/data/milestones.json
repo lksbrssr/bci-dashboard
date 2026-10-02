@@ -908,5 +908,44 @@
     "sourceUrl": "https://www.globenewswire.com/news-release/2026/09/24/3368254/0/en/precision-neuroscience-closes-oversubscribed-250m-series-d-led-by-pershing-square-inc-the-ackman-oxman-institute-and-a-leading-life-sciences-investment-fund.html",
     "logo": "/logos/precision-neuroscience.png",
     "scope": "bci"
+  },
+  {
+    "company": "Neurosoft Bioelectronics",
+    "slug": "neurosoft-bioelectronics",
+    "activity": "partner",
+    "stage": "commercial",
+    "amountUsdM": null,
+    "date": "2026-09-24",
+    "datePrecision": "day",
+    "note": "Partnership with Mila to advance AI-powered neural interfaces and Neurosoft's cortical foundation model program. Neurosoft joins Mila's industry network; this is a research partnership, not a clinical efficacy result or regulatory approval.",
+    "sourceUrl": "https://mila.quebec/en/news/neurosoft-bioelectronics-partners-with-mila-to-advance-ai-powered-brain-computer-interfaces",
+    "logo": "/logos/neurosoft-bioelectronics.png",
+    "scope": "bci"
+  },
+  {
+    "company": "Science Corp",
+    "slug": "science-corp",
+    "activity": "leadership",
+    "stage": "commercial",
+    "amountUsdM": null,
+    "date": "2026-09-17",
+    "datePrecision": "day",
+    "note": "Science announced the promotion of Chief Strategy Officer Darius Shahida to President. CEO Max Hodak cited his role in the Series C and European commercial launch of PRIMA. Date is the company announcement, not a separately disclosed effective date.",
+    "sourceUrl": "https://science.xyz/news/leadership-shahida/",
+    "logo": "/logos/science-corp.png",
+    "scope": "bci"
+  },
+  {
+    "company": "Neuracle",
+    "slug": "neuracle",
+    "activity": "sales",
+    "stage": "commercial",
+    "amountUsdM": null,
+    "date": "2026-09-29",
+    "datePrecision": "day",
+    "note": "In its September 29 exchange disclosure, Neuracle reported 13 NEO-ONE SCI systems sold since July 2026 and 8 implanted as of the reply. This is the disclosure date, not the individual sales or implant dates; no revenue or IPO proceeds are inferred.",
+    "sourceUrl": "https://static.sse.com.cn/stock/disclosure/announcement/c/202609/002198_20260929_9IJE.pdf#page=137",
+    "logo": "/logos/neuracle.png",
+    "scope": "bci"
   }
 ]
