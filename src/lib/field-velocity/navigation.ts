@@ -1,6 +1,7 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
+import { isDraftAnchor } from "@/data/draft-chart-links";
 
 export const performanceAnchors = ["performance_curves", "simultaneously-recorded-neurons", "tissue-mapped", "neural-recording-hours", "idea_vintage", "latency_compression", "expectations", "draft-charts"] as const;
 const changedEvent = "atlas-performance-location";
@@ -19,16 +20,38 @@ export function takePerformanceFocusReturn() {
 
 /** Relative to the actual current origin/path/query; never hardcode a deployment. */
 export function performanceUrl(currentUrl: string, anchor: string) {
-  if (!(performanceAnchors as readonly string[]).includes(anchor)) throw new Error("Unknown performance anchor");
+  if (!(performanceAnchors as readonly string[]).includes(anchor) && !isDraftAnchor(anchor)) throw new Error("Unknown performance anchor");
   const url = new URL(currentUrl);
   url.hash = anchor;
   return url.href;
 }
 
+/** Wait for the revealed pane and its responsive plots to finish layout before scrolling.
+ * Only exact Draft targets scroll; section and existing modal locations retain their behavior.
+ */
+export function revealDraftTarget(anchor: string) {
+  if (anchor === "draft-charts" || !isDraftAnchor(anchor)) return;
+  const target = document.getElementById(anchor);
+  if (!target || target.closest("[hidden]")) return;
+  const gap = target.querySelector<HTMLDetailsElement>("[data-draft-gap-details]");
+  if (gap) gap.open = true;
+  let frame = window.requestAnimationFrame(() => {
+    frame = window.requestAnimationFrame(() => {
+      if (window.location.hash === `#${anchor}` && target.isConnected && !target.closest("[hidden]")) {
+        target.scrollIntoView({ block: "start", behavior: "instant" });
+      }
+    });
+  });
+  return () => window.cancelAnimationFrame(frame);
+}
+
 export function navigatePerformance(anchor: string) {
   const url = performanceUrl(window.location.href, anchor);
-  if (url === window.location.href) return;
-  const isChart = !["performance_curves", "expectations", "draft-charts"].includes(anchor);
+  if (url === window.location.href) {
+    revealDraftTarget(anchor);
+    return;
+  }
+  const isChart = !isDraftAnchor(anchor) && !["performance_curves", "expectations"].includes(anchor);
   window.history.pushState({ ...window.history.state, atlasModalFrom: isChart ? window.location.href : null }, "", url);
   window.dispatchEvent(new Event(changedEvent));
 }
