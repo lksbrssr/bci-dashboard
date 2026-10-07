@@ -11,6 +11,7 @@ parsed = urlparse(BASE)
 assert parsed.hostname in ('127.0.0.1', 'localhost'), 'Local QA only'
 BASE = parsed._replace(query='review=modal-qa', fragment='').geturl()
 ORIGIN = parsed.scheme + '://' + parsed.netloc
+APP_ROOT = ORIGIN + parsed.path.rsplit('/', 1)[0]
 CHARTS = {'simultaneously-recorded-neurons': 7, 'tissue-mapped': 7, 'neural-recording-hours': 11, 'idea_vintage': 27, 'latency_compression': 4}
 def val(expr): return js('(() => ' + expr + ')()')
 def snap(name):
@@ -121,7 +122,7 @@ try:
     assert not val('document.body.innerText.includes("Open Neural Data Hours")')
     assert not val('document.body.innerText.includes("The Implant Ledger")')
     for route in ['milestones','funding','ecosystem']:
-        goto_url(ORIGIN+'/'+route);wait_for_load();snap('modal-regression-'+route)
+        goto_url(APP_ROOT+'/'+route);wait_for_load();snap('modal-regression-'+route)
         assert val('document.querySelector("h1")?.textContent')
         no_overflow()
     (OUT/'modal-regression-report.json').write_text(json.dumps({'graph_history':True,'expectations_back_forward':True,'fixed_axis_filter':True,'mixed_input':True,'dark_reduced_motion':True,'routes':['milestones','funding','ecosystem']},indent=2)+'\n')

@@ -1,6 +1,8 @@
 "use client";
 
 import { DRAFT_CHARTS, DRAFT_CHART_CATEGORIES, type DraftChart } from "@/data/draft-charts";
+import { DRAFT_CHART_LINKS } from "@/data/draft-chart-links";
+import { DraftChartShare } from "@/components/draft-chart-share";
 import { DRAFT_CHART_EVIDENCE } from "@/data/draft-chart-observations";
 import { DraftChartPlot, DraftEventTimeline } from "@/components/draft-chart-plot";
 import { setPerformanceFocusReturn, navigatePerformance } from "@/lib/field-velocity/navigation";
@@ -33,6 +35,7 @@ function Methodology({ chart }: { chart: DraftChart }) {
 }
 
 export function DraftChartsSection() {
+  const linksFor = (chart: DraftChart) => DRAFT_CHART_LINKS.find(link => link.title === chart.title)!;
   const plotted = DRAFT_CHARTS.filter(chart => DRAFT_CHART_EVIDENCE[chart.title]?.status === "plotted");
   const gaps = DRAFT_CHARTS.filter(chart => DRAFT_CHART_EVIDENCE[chart.title]?.status !== "plotted");
   return <section className="draft-charts draft-charts-gallery" aria-labelledby="draft-charts-title">
@@ -54,15 +57,25 @@ export function DraftChartsSection() {
           {charts.length ? <div className="draft-chart-grid">
             {charts.map(chart => {
               const evidence = DRAFT_CHART_EVIDENCE[chart.title];
-              return <article key={chart.title} className={`draft-chart-card card${evidence.plots.length > 1 ? " draft-chart-card-multiple" : ""}`} data-draft-chart-card={chart.title} data-draft-chart-status="plotted">
+              return <article id={linksFor(chart).id} key={chart.title} className={`draft-chart-card card${evidence.plots.length > 1 ? " draft-chart-card-multiple" : ""}`} data-draft-chart-card={chart.title} data-draft-chart-status="plotted">
                 <div className="draft-chart-card-header">
                   <span className="pc-eyebrow">Bounded evidence</span>
                   <span className="draft-chart-readiness">{evidence.timeline ? `${evidence.timeline.events.length} events` : `${evidence.plots.reduce((sum, plot) => sum + plot.points.length, 0)} observations`}</span>
                 </div>
                 <h4>{chart.title}</h4>
+                <DraftChartShare anchor={linksFor(chart).id} label={chart.title} />
                 <p className="draft-chart-summary">{evidence.summary}</p>
-                <div className="draft-chart-plots">{evidence.plots.map(plot => <DraftChartPlot key={plot.id} plot={plot} />)}</div>
-                {evidence.timeline && <DraftEventTimeline timeline={evidence.timeline} />}
+                <div className="draft-chart-plots">{evidence.plots.map(plot => {
+                  const panel = linksFor(chart).panels.find(panel => panel.plotId === plot.id)!;
+                  return <div key={plot.id} id={panel.id} data-draft-panel>
+                    <DraftChartPlot plot={plot} />
+                    <DraftChartShare anchor={panel.id} label={plot.title} />
+                  </div>;
+                })}</div>
+                {evidence.timeline && <div id={linksFor(chart).panels.find(panel => panel.plotId === null)!.id} data-draft-panel>
+                  <DraftEventTimeline timeline={evidence.timeline} />
+                  <DraftChartShare anchor={linksFor(chart).panels.find(panel => panel.plotId === null)!.id} label="Selected application events" />
+                </div>}
                 {evidence.gapReason && <p className="draft-chart-still-missing" data-draft-still-missing><strong>Still missing:</strong> {evidence.gapReason}</p>}
                 <Methodology chart={chart} />
                 {chart.metricsAnchor && chart.metricsNote && <MetricsChartLink anchor={chart.metricsAnchor} note={chart.metricsNote} />}
@@ -79,8 +92,9 @@ export function DraftChartsSection() {
         const categoryGaps = gaps.filter(chart => chart.category === category);
         return categoryGaps.length > 0 && <div key={category} className="draft-gap-group">
           <h4>{category}</h4>
-          {categoryGaps.map(chart => <article key={chart.title} className="draft-chart-gap" data-draft-chart-card={chart.title} data-draft-chart-status="gap">
-            <details>
+          {categoryGaps.map(chart => <article id={linksFor(chart).id} key={chart.title} className="draft-chart-gap" data-draft-chart-card={chart.title} data-draft-chart-status="gap">
+            <DraftChartShare anchor={linksFor(chart).id} label={chart.title} />
+            <details data-draft-gap-details>
               <summary><span>{chart.title}</span><span className="draft-gap-label">Evidence gap</span></summary>
               <p>{DRAFT_CHART_EVIDENCE[chart.title]?.gapReason ?? "Source-backed observations have not yet been assembled for this definition."}</p>
               <Methodology chart={chart} />
