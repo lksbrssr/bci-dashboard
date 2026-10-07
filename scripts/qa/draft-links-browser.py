@@ -15,6 +15,7 @@ def val(expr): return js('(() => ' + expr + ')()')
 def wait(predicate, label):
     for attempt in range(80):
         try:
+            if val('document.visibilityState') != 'visible': cdp('Page.bringToFront')
             if predicate(): return
         except RuntimeError as error:
             # Read-only retry during a dispatched page reload; never repeat input.
@@ -37,13 +38,18 @@ def ready(ident):
 
 def screenshot(name): capture_screenshot(path=str(OUT/(name+'.png')))
 def native_click(selector):
-    js('(() => document.querySelector('+json.dumps(selector)+').scrollIntoView({block:"center",behavior:"instant"}))()')
-    rect=val('document.querySelector('+json.dumps(selector)+').getBoundingClientRect().toJSON()')
-    x=rect['x']+rect['width']/2; y=rect['y']+rect['height']/2
-    assert val('document.querySelector('+json.dumps(selector)+').contains(document.elementFromPoint('+str(x)+','+str(y)+'))'), selector
-    capture_screenshot() # settle pixels before native input; coordinates are measured anew below
-    rect=val('document.querySelector('+json.dumps(selector)+').getBoundingClientRect().toJSON()')
-    click_at_xy(rect['x']+rect['width']/2,rect['y']+rect['height']/2)
+    # A fresh fragment can still have its post-layout scroll queued. Recheck the
+    # hit target AFTER the screenshot; never dispatch input outside the viewport.
+    for attempt in range(5):
+        js('(() => document.querySelector('+json.dumps(selector)+').scrollIntoView({block:"center",behavior:"instant"}))()')
+        capture_screenshot()
+        rect=val('document.querySelector('+json.dumps(selector)+').getBoundingClientRect().toJSON()')
+        x=rect['x']+rect['width']/2; y=rect['y']+rect['height']/2
+        if not (0<x<val('innerWidth') and 64<y<val('innerHeight')): continue
+        if not val('document.querySelector('+json.dumps(selector)+').contains(document.elementFromPoint('+str(x)+','+str(y)+'))'): continue
+        click_at_xy(x,y)
+        return
+    raise AssertionError('No settled native hit target: '+selector)
 
 report=[]
 goto_url(BASE); loaded(); cdp('Page.bringToFront')
@@ -63,7 +69,7 @@ try:
             assert val('document.querySelector('+json.dumps('a[href="#'+ident+'"]')+').href')==BASE+'#'+ident
             report.append(dict(viewportWidth=width,**s))
         # Representative native links: candidate, independent panel and explicit gap.
-        for ident in ['draft-largest-connectome','draft-panel-connectome-synapses','draft-mapping-cost']:
+        for ident in ['draft-largest-connectome','draft-panel-largest-connectome-synapses','draft-mapping-cost']:
             goto_url(BASE+'#draft-charts');loaded()
             wait(lambda: val('document.querySelector("main button[aria-current=true]")?.textContent')=='Draft charts','section tab')
             native_click('a[href="#'+ident+'"]')
@@ -93,7 +99,7 @@ try:
         js('(() => history.back())()');wait(lambda: ready(ident),'Back to candidate')
         js('(() => history.forward())()')
         wait(lambda: val('document.querySelector("main button[aria-current=true]")?.textContent')!='Draft charts','Forward to other tab')
-        goto_url(BASE+'#draft-panel-connectome-synapses');loaded();wait(lambda: ready('draft-panel-connectome-synapses'),'final panel')
+        goto_url(BASE+'#draft-panel-largest-connectome-synapses');loaded();wait(lambda: ready('draft-panel-largest-connectome-synapses'),'final panel')
         screenshot('panel-'+str(width))
     (OUT/'draft-links-browser-report.json').write_text(json.dumps({'targets':len(TARGETS),'freshCases':report,'nativeDirectRepeatCopy':True,'historyAndMetricReturn':True},indent=2)+'\n')
     print(json.dumps({'targets':len(TARGETS),'freshCases':len(report),'nativeDirectRepeatCopy':True,'historyAndMetricReturn':True}))
